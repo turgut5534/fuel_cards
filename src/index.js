@@ -4,30 +4,18 @@ const cors = require("cors");
 
 const app = express()
 const port = process.env.PORT || 3000
-const API_SECRET = process.env.API_SECRET
 
 app.use(express.json());
 app.use(cors());
 
-
-function checkSecret(req, res, next) {
-  const clientSecret = req.headers['x-api-key'];
-  if (clientSecret !== API_SECRET) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-  next();
-}
-
-app.use(checkSecret);
-
-app.get('/' , async (req,res)=> {
+app.get('/', async (req,res)=> {
 
     try {
         const [rows] = await db.query('SELECT * FROM cards');
         res.json(rows);
     } catch(e) {
         console.log(e)
-        res.status(500).json({ error: 'Database error' });
+        res.status(500).json({ error: e.message});
     }
 
 })

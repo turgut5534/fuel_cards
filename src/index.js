@@ -11,6 +11,7 @@ app.use(cors());
 app.get('/', async (req,res)=> {
 
     try {
+      
         const [rows] = await db.query('SELECT * FROM cards');
         res.json(rows);
     } catch(e) {
@@ -99,15 +100,20 @@ app.post('/cards/:id/spend', async (req, res) => {
 
     const updatedBalance = currentBalance - amount;
 
-    await db.query(
+    const result = await db.query(
       'INSERT INTO transactions (card_id, transaction_type, amount, new_balance, fuel_price, liters) VALUES (?, "spend", ?, ?, ?, ?)',
       [cardId, amount, updatedBalance, fuel_price || 0, liters]
     );
 
+    const insertId = result[0].insertId;
+    const [rows] = await db.query('SELECT * FROM transactions WHERE transaction_id = ?', [insertId]);
+    const newTransaction = (rows)[0];
+    
+    console.log(newTransaction)
+
     res.json({
       message: `Card ${cardId} spent ${amount}`,
-      remaining_balance: updatedBalance,
-      liters
+      transaction: newTransaction
     });
   } catch (err) {
     console.error(err);
@@ -130,32 +136,13 @@ app.get('/cards/:id/transactions', async (req, res) => {
       [cardId]
     );
 
-    res.json({ card_id: cardId, transactions });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Database error' });
-  }
-});
+    const latestFuelPrice = transactions.length > 0 ? transactions[0].fuel_price : null;
 
-app.get('/cards/:id/latest-fuel-price', async (req, res) => {
-  const cardId = req.params.id;
-
-  try {
-    // Get the latest 'spend' transaction for this card
-    const [rows] = await db.query(
-      `SELECT fuel_price 
-       FROM transactions 
-       WHERE card_id = ? AND transaction_type = "spend" 
-       ORDER BY transaction_date DESC 
-       LIMIT 1`,
-      [cardId]
-    );
-
-    if (rows.length === 0 || rows[0].fuel_price === null) {
-      return res.status(404).json({ error: 'No fuel price found' });
-    }
-
-    res.json({ latest_fuel_price: parseFloat(rows[0].fuel_price) });
+    res.json({ 
+      card: cardRows[0], 
+      transactions, 
+      latestFuelPrice: parseFloat(latestFuelPrice) 
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Database error' });

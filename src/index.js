@@ -142,24 +142,7 @@ app.get('/cards/:id/transactions', async (req, res) => {
     );
 
     const latestFuelPrice = latestSpendTransaction.length > 0 ? latestSpendTransaction[0].fuel_price : null;
-          <View style={styles.stepperContainer}>
-            <Text style={styles.stepperLabel}>Fuel Price (zł/L)</Text>
-            <View style={styles.stepperRow}>
-              <TouchableOpacity
-                style={styles.stepperButton}
-                onPress={() => setFuelPrice(prev => Math.max(prev - 0.01, 0))}
-              >
-                <Text style={styles.stepperButtonText}>−</Text>
-              </TouchableOpacity>
-              <Text style={styles.stepperValue}>{fuelPrice.toFixed(2)}</Text>
-              <TouchableOpacity
-                style={styles.stepperButton}
-                onPress={() => setFuelPrice(prev => prev + 0.01)}
-              >
-                <Text style={styles.stepperButtonText}>+</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+ 
     res.json({ 
       card: cardRows[0], 
       transactions, 
